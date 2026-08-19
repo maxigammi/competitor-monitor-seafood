@@ -1,0 +1,46 @@
+[
+  {
+    "name": "Краб Креветка",
+    "url": "https://www.krab-krevetka.ru/",
+    "title": "Краб Креветка - морепродукты с быстрой доставкой по Москве",
+    "h1": null,
+    "first_paragraph": "Сразу после вылова морепродукты подвергаются шоковой заморозке, что обеспечивает их полную сохранность",
+    "error": null,
+    "screenshot": "data/screenshots/krab_krevetka.png"
+  },
+  {
+    "name": "Crab:Store",
+    "url": "https://crabstore.online/",
+    "title": "CRAB:STORE - морепродукты, камчатский краб, живые устрицы, креветки, осьминоги, красная икра, гребешки, мидии купить с доставкой по Москве и Московской Области. К каждому заказу камчатского краба ножницы в подарок!",
+    "h1": null,
+    "first_paragraph": null,
+    "error": null,
+    "screenshot": "data/screenshots/crabstore.png"
+  },
+  {
+    "name": "KraBsBeRi",
+    "url": "https://krabsberi.ru/",
+    "title": "Интернет-магазин морепродуктов",
+    "h1": "Интернет-магазин морепродуктов",
+    "first_paragraph": "Благодаря шоковой заморозке прямо на промысловом судне, продукция сохраняет идеальную свежесть на протяжении всего пути от места заготовки до вашего стола.",
+    "error": null,
+    "screenshot": "data/screenshots/krabsberi.png"
+  },
+  {
+    "name": "Краб №1",
+    "url": "https://krab1.ru/",
+    "title": "Морепродукты с доставкой по Москве в интернет-магазине Краб №1",
+    "h1": "КАМЧАТКА",
+    "first_paragraph": "Заморозка сразу после вылова — чтобы вкус моря сохранился до вашего стола.",
+    "error": null,
+    "screenshot": "data/screenshots/krab1.png"
+  },
+  {
+    "name": "Mr. CRAB",
+    "url": "https://mistercrab.ru/",
+    "title": null,
+    "h1": null,
+    "first_paragraph": null,
+    "error": "Превышено время ожидания загрузки страницы (сайт медленно грузится под headless-браузером)"
+  }
+]
