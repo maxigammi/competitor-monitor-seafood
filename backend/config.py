@@ -42,9 +42,13 @@ logger = setup_logging()
 class Settings(BaseSettings):
     """Настройки приложения"""
 
-    # ProxyAPI (OpenAI-совместимый)
+    # ProxyAPI (OpenAI-совместимый) или прямой OpenAI API.
+    # По умолчанию ходим в ProxyAPI (как в исходном уроке). Если задан свой
+    # настоящий ключ OpenAI (platform.openai.com), укажите в .env:
+    #   OPENAI_BASE_URL=https://api.openai.com/v1
+    # и он переопределит base_url на официальный эндпоинт OpenAI.
     proxy_api_key: str = os.getenv("PROXY_API_KEY", "")
-    proxy_api_base_url: str = "https://api.proxyapi.ru/openai/v1"
+    proxy_api_base_url: str = os.getenv("OPENAI_BASE_URL", "https://api.proxyapi.ru/openai/v1")
     openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     openai_vision_model: str = os.getenv("OPENAI_VISION_MODEL", "gpt-4o-mini")
 
