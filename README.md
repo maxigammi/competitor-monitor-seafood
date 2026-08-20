@@ -6,7 +6,7 @@ MVP приложение для анализа конкурентной сред
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)
 ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o-purple.svg)
 
-> Форк учебного проекта [Toxap/pem08](https://github.com/Toxap/pem08), адаptированный под домашнее
+> Форк учебного проекта [Toxap/pem08](https://github.com/Toxap/pem08), адаптированный под домашнее
 > задание "Персональный AI-анализатор рынка конкурентов".
 
 ## 🦀 Мой кейс: интернет-магазины морепродуктов
@@ -72,20 +72,31 @@ pip install -r requirements.txt
 
 ### 2. Настройка переменных окружения
 
-Создайте файл `.env` в корне проекта (используйте `env.example.txt` как шаблон):
+Скопируйте `env.example.txt` в `.env` (сам `.env` в `.gitignore` и никогда не коммитится):
+
+```bash
+cp env.example.txt .env
+```
+
+Впишите ключ в `PROXY_API_KEY`. Поддерживаются два варианта:
 
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-4o-mini
-OPENAI_VISION_MODEL=gpt-4o-mini
+# Вариант A — ключ ProxyAPI (proxyapi.ru), используется как есть
+PROXY_API_KEY=your_proxy_api_key_here
+
+# Вариант B — настоящий ключ OpenAI (platform.openai.com): тот же PROXY_API_KEY,
+# но дополнительно укажите официальный эндпоинт OpenAI
+PROXY_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.openai.com/v1
 ```
 
 ### 3. Запуск приложения
 
 ```bash
-# Запуск сервера
-python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+python run.py
 ```
+
+(эквивалент: `python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000`)
 
 Приложение будет доступно по адресу: http://localhost:8000
 
