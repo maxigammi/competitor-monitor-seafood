@@ -26,8 +26,8 @@ MVP приложение для анализа конкурентной сред
 Референсные материалы (скриншоты лендингов + распарсенные title/H1/абзац для каждого магазина)
 собраны через `/parse_demo` и лежат в [`data/`](data): [`data/screenshots/`](data/screenshots)
 и [`data/competitors_reference.json`](data/competitors_reference.json). 4 из 5 сайтов спарсились
-успешно за один прогон; Mr. CRAB не уложился в таймаут headless-браузера — это тоже реалистичный
-результат парсинга живых сайтов и хорошо показывает обработку ошибок в `parser_service.py`.
+успешно за один прогон; Mr. CRAB не уложился в таймаут headless-браузера (10 сек) — итоговая
+запись с полем `error` для этого сайта тоже сохранена в JSON, без ретраев.
 
 ### Кастомные поля анализа (шаг 3 задания)
 
@@ -186,20 +186,39 @@ python build.py          # → dist/CompetitorMonitor.exe на Windows
 
 Backend должен быть запущен отдельно (`python run.py`) — desktop-клиент обращается к нему по HTTP.
 
-## 🐳 Запуск без системного Chrome (песочница/CI)
+## 🐧 Разработка в WSL: на что натыкались
 
-`parser_service.py` по умолчанию использует системный Chrome + автоустановку ChromeDriver через
-`webdriver-manager` — этого достаточно на обычной машине с установленным Chrome. Если Chrome не
-установлен глобально (например, в контейнере без прав root), можно скачать
-[Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/) и указать пути явно:
+Весь кейс собран и прогнан в WSL (Ubuntu на Windows). Три момента, специфичных именно для этого
+окружения — на обычном Linux/macOS с установленным Chrome их не будет:
 
-```env
-CHROME_BINARY_LOCATION=/path/to/chrome-linux64/chrome
-CHROMEDRIVER_PATH=/path/to/chromedriver-linux64/chromedriver
-```
+- **Chrome не установлен по умолчанию.** `webdriver-manager` в `parser_service.py` скачивает
+  только `chromedriver`, а не сам браузер — без Chrome драйвер падает с
+  `chromedriver unexpectedly exited. Status code was: 127`. Ставится один раз:
+  ```bash
+  wget -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  sudo apt install -y /tmp/chrome.deb
+  ```
+  Если Chrome поставить нельзя (например, нет root — так было в песочнице при сборе скриншотов
+  для `data/`), `parser_service.py` понимает переменные окружения `CHROME_BINARY_LOCATION` и
+  `CHROMEDRIVER_PATH` — можно скачать портативную сборку
+  [Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/) и указать пути к
+  распакованным бинарникам явно, без установки в систему.
 
-Так был протестирован `/parse_demo` при разработке этого кейса — все скриншоты в
-[`data/screenshots/`](data/screenshots) сделаны именно так, headless-браузером без графической сессии.
+- **Нет цветного эмодзи-шрифта.** Desktop-приложение (PyQt6) использует эмодзи в подписях вкладок
+  и заголовках блоков (📝🖼️🌐📋 и т.д.) — без `fonts-noto-color-emoji` Qt рисует на их месте пустые
+  квадратики:
+  ```bash
+  sudo apt install -y fonts-noto-color-emoji && fc-cache -f
+  ```
+
+- **`build.py` не даёт `.exe` при запуске из WSL.** PyInstaller собирает исполняемый файл под ту
+  ОС, где его запустили, а не кросс-компилирует. Сборка из WSL кладёт в `dist/` ELF-бинарник
+  `CompetitorMonitor` без расширения. Чтобы получить `CompetitorMonitor.exe`, `build.py` нужно
+  запускать из Windows-Python (PowerShell/CMD, не WSL-терминал) — можно зайти в проект по
+  сетевому пути `\\wsl.localhost\<дистрибутив>\...\desktop` и собрать оттуда.
+
+Обратное работает без доп. настройки: WSL2 сам пробрасывает порты, поэтому backend, запущенный в
+WSL на `localhost:8000`, виден и приложениям на самой Windows.
 
 ## ⚠️ Требования
 
