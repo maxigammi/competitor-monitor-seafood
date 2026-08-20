@@ -141,12 +141,17 @@ class OpenAIService:
             logger.error("=" * 50)
             raise
 
-    async def analyze_image(self, image_base64: str, mime_type: str = "image/jpeg") -> ImageAnalysis:
-        """Анализ изображения (баннер, сайт, упаковка)"""
+    async def analyze_image(self, image_url: str) -> ImageAnalysis:
+        """Анализ изображения (баннер, сайт, упаковка).
+
+        image_url — либо data:...;base64,... (загруженный файл), либо обычная
+        http(s)-ссылка на изображение на стороннем сайте. OpenAI Vision API
+        одинаково умеет работать с обоими форматами, поэтому скачивать
+        изображение по ссылке самим не нужно.
+        """
         logger.info("=" * 50)
         logger.info("🖼️ АНАЛИЗ ИЗОБРАЖЕНИЯ")
-        logger.info(f"  Размер base64: {len(image_base64)} символов")
-        logger.info(f"  MIME тип: {mime_type}")
+        logger.info(f"  Источник: {'ссылка' if image_url.startswith('http') else 'загруженный файл'}")
         logger.info(f"  Модель: {self.vision_model}")
         
         system_prompt = """Ты — эксперт по визуальному маркетингу и дизайну в нише интернет-магазинов
@@ -191,7 +196,7 @@ class OpenAIService:
                             {
                                 "type": "image_url",
                                 "image_url": {
-                                    "url": f"data:{mime_type};base64,{image_base64}"
+                                    "url": image_url
                                 }
                             }
                         ]

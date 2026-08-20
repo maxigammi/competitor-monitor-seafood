@@ -342,15 +342,26 @@ class MainWindow(QMainWindow):
         desc.setObjectName("cardDescription")
         
         self.drop_zone = DropZone()
-        
+        self.drop_zone.fileDropped.connect(lambda _: self.image_url_input.clear())
+
+        or_label = QLabel("или вставьте ссылку на изображение")
+        or_label.setStyleSheet("color: #64748b; font-size: 12px;")
+
+        self.image_url_input = QLineEdit()
+        self.image_url_input.setPlaceholderText("https://example.com/photo.jpg")
+        self.image_url_input.textChanged.connect(self.on_image_url_changed)
+
         self.analyze_image_btn = QPushButton("⚡ Проанализировать")
         self.analyze_image_btn.setObjectName("primaryButton")
         self.analyze_image_btn.clicked.connect(self.analyze_image)
-        
+
         card_layout.addWidget(title)
         card_layout.addWidget(desc)
         card_layout.addSpacing(16)
         card_layout.addWidget(self.drop_zone)
+        card_layout.addSpacing(12)
+        card_layout.addWidget(or_label)
+        card_layout.addWidget(self.image_url_input)
         card_layout.addSpacing(16)
         card_layout.addWidget(self.analyze_image_btn)
         
@@ -652,15 +663,25 @@ class MainWindow(QMainWindow):
         else:
             self.show_error(result.get("error", "Неизвестная ошибка"))
     
+    def on_image_url_changed(self, text: str):
+        """Ссылка и файл взаимоисключающие — раз ввели ссылку, файл убираем"""
+        if text.strip():
+            self.drop_zone.clear()
+
     def analyze_image(self):
-        """Анализ изображения"""
-        if not self.drop_zone.selected_file:
-            self.show_error("Выберите изображение для анализа")
+        """Анализ изображения — файлом или по ссылке"""
+        image_url = self.image_url_input.text().strip()
+
+        if not self.drop_zone.selected_file and not image_url:
+            self.show_error("Выберите файл или вставьте ссылку на изображение")
             return
-        
+
         self.show_loading("Анализирую изображение...")
-        
-        self.current_worker = WorkerThread(api_client.analyze_image, self.drop_zone.selected_file)
+
+        if self.drop_zone.selected_file:
+            self.current_worker = WorkerThread(api_client.analyze_image, self.drop_zone.selected_file)
+        else:
+            self.current_worker = WorkerThread(api_client.analyze_image_url, image_url)
         self.current_worker.finished.connect(self.on_image_analysis_complete)
         self.current_worker.error.connect(lambda e: self.on_error(e))
         self.current_worker.start()

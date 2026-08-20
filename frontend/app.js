@@ -26,6 +26,7 @@ const elements = {
     previewContainer: document.getElementById('preview-container'),
     imagePreview: document.getElementById('image-preview'),
     removeImageBtn: document.getElementById('remove-image'),
+    imageUrlInput: document.getElementById('image-url-input'),
     analyzeImageBtn: document.getElementById('analyze-image-btn'),
     
     // Parse demo
@@ -61,7 +62,18 @@ const api = {
     async analyzeImage(file) {
         const formData = new FormData();
         formData.append('file', file);
-        
+
+        const response = await fetch(`${this.baseUrl}/analyze_image`, {
+            method: 'POST',
+            body: formData
+        });
+        return response.json();
+    },
+
+    async analyzeImageUrl(imageUrl) {
+        const formData = new FormData();
+        formData.append('image_url', imageUrl);
+
         const response = await fetch(`${this.baseUrl}/analyze_image`, {
             method: 'POST',
             body: formData
@@ -417,7 +429,10 @@ const handlers = {
     
     processImage(file) {
         state.selectedImage = file;
-        
+
+        // Файл и ссылка взаимоисключающие — раз выбрали файл, ссылку убираем
+        elements.imageUrlInput.value = '';
+
         const reader = new FileReader();
         reader.onload = (e) => {
             elements.imagePreview.src = e.target.result;
@@ -427,27 +442,40 @@ const handlers = {
         };
         reader.readAsDataURL(file);
     },
-    
+
     handleRemoveImage() {
         state.selectedImage = null;
         elements.imageInput.value = '';
         elements.imagePreview.src = '';
         elements.previewContainer.hidden = true;
         elements.uploadZone.querySelector('.upload-content').hidden = false;
-        elements.analyzeImageBtn.disabled = true;
+        elements.analyzeImageBtn.disabled = elements.imageUrlInput.value.trim().length === 0;
     },
-    
+
+    handleImageUrlInput() {
+        const hasUrl = elements.imageUrlInput.value.trim().length > 0;
+        if (hasUrl) {
+            // ссылка и файл взаимоисключающие — раз ввели ссылку, файл убираем
+            this.handleRemoveImage();
+        }
+        elements.analyzeImageBtn.disabled = !hasUrl && !state.selectedImage;
+    },
+
     async handleAnalyzeImage() {
-        if (!state.selectedImage) {
-            ui.showError('Выберите изображение для анализа');
+        const imageUrl = elements.imageUrlInput.value.trim();
+
+        if (!state.selectedImage && !imageUrl) {
+            ui.showError('Выберите файл или вставьте ссылку на изображение');
             return;
         }
-        
+
         ui.showLoading();
-        
+
         try {
-            const result = await api.analyzeImage(state.selectedImage);
-            
+            const result = state.selectedImage
+                ? await api.analyzeImage(state.selectedImage)
+                : await api.analyzeImageUrl(imageUrl);
+
             if (result.success && result.analysis) {
                 ui.showResults(ui.renderImageAnalysis(result.analysis));
             } else {
@@ -530,6 +558,7 @@ function init() {
     elements.uploadZone.addEventListener('dragleave', handlers.handleDragLeave.bind(handlers));
     elements.uploadZone.addEventListener('drop', handlers.handleDrop.bind(handlers));
     elements.removeImageBtn.addEventListener('click', handlers.handleRemoveImage.bind(handlers));
+    elements.imageUrlInput.addEventListener('input', handlers.handleImageUrlInput.bind(handlers));
     elements.analyzeImageBtn.addEventListener('click', handlers.handleAnalyzeImage.bind(handlers));
     
     // Parse demo

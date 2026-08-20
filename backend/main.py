@@ -5,7 +5,7 @@
 import base64
 import time
 import logging
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -153,62 +153,80 @@ async def analyze_text(request: TextAnalysisRequest):
 
 
 @app.post("/analyze_image", response_model=ImageAnalysisResponse)
-async def analyze_image(file: UploadFile = File(...)):
+async def analyze_image(
+    file: UploadFile = File(None),
+    image_url: str = Form(None)
+):
     """
-    Анализ изображения конкурента
+    Анализ изображения конкурента — либо загруженным файлом, либо ссылкой
+    на изображение на стороннем сайте (без скачивания на диск: ссылка уходит
+    напрямую в OpenAI Vision API, которая сама умеет её открыть).
     """
     logger.info("=" * 50)
     logger.info("🖼️ API: АНАЛИЗ ИЗОБРАЖЕНИЯ")
-    logger.info(f"  Имя файла: {file.filename}")
-    logger.info(f"  Тип: {file.content_type}")
-    
-    # Проверяем тип файла
-    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
-    if file.content_type not in allowed_types:
-        logger.warning(f"  ⚠ Неподдерживаемый тип файла: {file.content_type}")
+
+    if not file and not image_url:
+        logger.warning("  ⚠ Не передан ни файл, ни image_url")
         logger.info("=" * 50)
-        raise HTTPException(
-            status_code=400,
-            detail=f"Неподдерживаемый тип файла. Разрешены: {', '.join(allowed_types)}"
-        )
-    
+        raise HTTPException(status_code=400, detail="Загрузите файл или укажите image_url")
+    if file and image_url:
+        logger.warning("  ⚠ Переданы и файл, и image_url одновременно")
+        logger.info("=" * 50)
+        raise HTTPException(status_code=400, detail="Укажите либо файл, либо image_url — не оба сразу")
+
     try:
         start_time = time.time()
-        
-        # Читаем и кодируем изображение
-        logger.info("  📥 Чтение файла...")
-        content = await file.read()
-        file_size_kb = len(content) / 1024
-        logger.info(f"  Размер файла: {file_size_kb:.1f} KB")
-        
-        image_base64 = base64.b64encode(content).decode('utf-8')
-        logger.info(f"  Base64 размер: {len(image_base64)} символов")
-        
+
+        if image_url:
+            logger.info(f"  Ссылка: {image_url}")
+            model_image_url = image_url
+            history_summary = f"Ссылка: {image_url}"
+        else:
+            logger.info(f"  Имя файла: {file.filename}")
+            logger.info(f"  Тип: {file.content_type}")
+
+            allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+            if file.content_type not in allowed_types:
+                logger.warning(f"  ⚠ Неподдерживаемый тип файла: {file.content_type}")
+                logger.info("=" * 50)
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Неподдерживаемый тип файла. Разрешены: {', '.join(allowed_types)}"
+                )
+
+            logger.info("  📥 Чтение файла...")
+            content = await file.read()
+            file_size_kb = len(content) / 1024
+            logger.info(f"  Размер файла: {file_size_kb:.1f} KB")
+
+            image_base64 = base64.b64encode(content).decode('utf-8')
+            model_image_url = f"data:{file.content_type};base64,{image_base64}"
+            history_summary = f"Изображение: {file.filename}"
+
         # Анализируем
         logger.info("  🔍 Отправка на анализ...")
-        analysis = await openai_service.analyze_image(
-            image_base64=image_base64,
-            mime_type=file.content_type
-        )
-        
+        analysis = await openai_service.analyze_image(image_url=model_image_url)
+
         elapsed = time.time() - start_time
         logger.info(f"  ✓ Анализ завершён за {elapsed:.2f} сек")
-        
+
         # Сохраняем в историю
         logger.info("  💾 Сохранение в историю...")
         history_service.add_entry(
             request_type="image",
-            request_summary=f"Изображение: {file.filename}",
+            request_summary=history_summary,
             response_summary=analysis.description[:200] if analysis.description else "Анализ изображения"
         )
-        
+
         logger.info("  ✅ УСПЕХ: Анализ изображения завершён")
         logger.info("=" * 50)
-        
+
         return ImageAnalysisResponse(
             success=True,
             analysis=analysis
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"  ❌ ОШИБКА: {e}")
         logger.error("=" * 50)

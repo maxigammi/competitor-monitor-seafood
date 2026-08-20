@@ -113,10 +113,19 @@ curl -X POST "http://localhost:8000/analyze_text" \
 
 ### 2. Анализ изображения (`POST /analyze_image`)
 
-**Запрос:**
+Принимает **либо** загруженный файл, **либо** ссылку на изображение на стороннем сайте — не оба
+сразу. Для ссылки файл никуда не скачивается: она передаётся напрямую в OpenAI Vision API.
+
+**Запрос (файл):**
 ```bash
 curl -X POST "http://localhost:8000/analyze_image" \
   -F "file=@banner.jpg"
+```
+
+**Запрос (ссылка на изображение):**
+```bash
+curl -X POST "http://localhost:8000/analyze_image" \
+  -F "image_url=https://crabstore.online/banner.jpg"
 ```
 
 **Ответ:**
@@ -136,7 +145,9 @@ curl -X POST "http://localhost:8000/analyze_image" \
       "Добавить социальное доказательство (отзывы, рейтинги)",
       "Увеличить размер CTA кнопки",
       "Рассмотреть A/B тестирование цветов"
-    ]
+    ],
+    "design_score": 7,
+    "freshness_trust_score": 6
   },
   "error": null
 }

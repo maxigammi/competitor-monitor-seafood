@@ -62,6 +62,10 @@ class APIClient:
         """Анализ изображения из bytes"""
         files = {'file': (filename, image_bytes, 'image/jpeg')}
         return self._request("POST", "/analyze_image", files=files)
+
+    def analyze_image_url(self, image_url: str) -> Dict[str, Any]:
+        """Анализ изображения по ссылке на стороннем сайте — без скачивания на диск"""
+        return self._request("POST", "/analyze_image", data={"image_url": image_url})
     
     def parse_demo(self, url: str) -> Dict[str, Any]:
         """Парсинг и анализ сайта"""

@@ -397,6 +397,23 @@ input[type="text"]::placeholder {
     color: var(--text-primary);
 }
 
+/* === Or divider (upload vs. paste-a-link) === */
+.or-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 4px 0 16px;
+}
+.or-divider::before,
+.or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border-light);
+}
+
 /* === Upload Zone === */
 .upload-zone {
     border: 2px dashed var(--border-light);
