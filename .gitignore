@@ -1,6 +1,9 @@
 # Secrets
 .env
 
+# Runtime data — your own query history, keeps changing on every use
+history.json
+
 # Python
 __pycache__/
 *.py[cod]
